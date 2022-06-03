@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -74,7 +75,8 @@ fun <T> CustomSlider(
 	var rightXPosition by remember { mutableStateOf(0.dp) }
 
 	Canvas(modifier = modifier
-		.height(50.dp)
+		.height(70.dp)
+		.background(Color.Cyan)
 		.touchInteraction(remember { MutableInteractionSource() }) {
 			touchInteractionState = it
 		}
@@ -119,11 +121,11 @@ fun <T> CustomSlider(
 		when (currentState) {
 			is TouchInteraction.Down          -> {
 				val touchPosition = currentState.position
-				if (isCircleTouched(touchPosition.x, leftCirclePosition.x, sliderConfiguration.touchCircleRadius)) {
+				if (isCircleTouched(touchPosition.x, leftCirclePosition.x, sliderConfiguration.touchCircleRadius, sliderConfiguration.touchTolerance)) {
 					moveLeft = true
 				}
 
-				if (isCircleTouched(touchPosition.x, rightCirclePosition.x, sliderConfiguration.touchCircleRadius)) {
+				if (isCircleTouched(touchPosition.x, rightCirclePosition.x, sliderConfiguration.touchCircleRadius, sliderConfiguration.touchTolerance)) {
 					moveRight = true
 				}
 			}
@@ -190,11 +192,12 @@ private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {
 	return minElem to minIdx
 }
 
-fun isCircleTouched(touchX: Float, circlePositionX: Float, circleRadius: Float): Boolean =
-	touchX > (circlePositionX - circleRadius) && touchX < (circlePositionX + circleRadius)
+fun isCircleTouched(touchX: Float, circlePositionX: Float, circleRadius: Float, touchTolerance: Float): Boolean =
+	touchX > (circlePositionX - circleRadius - touchTolerance) && touchX < (circlePositionX + circleRadius + touchTolerance)
 
 data class SliderConfiguration(
 	val touchCircleRadiusDp: Dp = 15.dp,
+	private val touchToleranceDp: Dp = 16.dp,
 	private val tickCircleRadiusDp: Dp = 4.dp,
 	private val barHeightDp: Dp = 10.dp,
 	private val textOffsetDp: Dp = 22.dp,
@@ -207,6 +210,10 @@ data class SliderConfiguration(
 	context(DrawScope)
 	val touchCircleRadius: Float
 		get() = touchCircleRadiusDp.toPx()
+
+	context(DrawScope)
+	val touchTolerance: Float
+		get() = touchToleranceDp.toPx()
 
 	context(DrawScope)
 	val tickCircleRadius: Float
