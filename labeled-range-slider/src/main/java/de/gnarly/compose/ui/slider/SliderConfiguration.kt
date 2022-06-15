@@ -1,4 +1,4 @@
-package de.lex.compose
+package de.gnarly.compose.ui.slider
 
 import android.graphics.Paint
 import android.graphics.Typeface

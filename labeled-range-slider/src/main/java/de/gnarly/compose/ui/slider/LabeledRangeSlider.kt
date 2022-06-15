@@ -1,4 +1,4 @@
-package de.lex.compose
+package de.gnarly.compose.ui.slider
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 
 @Composable
-fun <T> CustomSlider(
+fun <T> LabeledRangeSlider(
 	steps: List<T>,
 	onRangeChanged: (lower: T, upper: T) -> Unit,
 	modifier: Modifier = Modifier,
@@ -138,7 +138,7 @@ fun <T> CustomSlider(
 @Preview
 @Composable
 fun CustomSliderPreview() {
-	CustomSlider((0..100).step(10).toList(), { _, _ -> })
+	LabeledRangeSlider((0..100).step(10).toList(), { _, _ -> })
 }
 
 private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {

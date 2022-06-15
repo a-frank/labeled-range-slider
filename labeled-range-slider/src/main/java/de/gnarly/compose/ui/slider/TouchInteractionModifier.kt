@@ -1,4 +1,4 @@
-package de.lex.compose
+package de.gnarly.compose.ui.slider
 
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.forEachGesture
