@@ -3,6 +3,7 @@ package de.lex.compose
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -46,7 +47,9 @@ fun <T> CustomSlider(
 		.touchInteraction(remember { MutableInteractionSource() }) {
 			touchInteractionState = it
 		}
+		.background(Color.Red)
 	) {
+		// TODO fix height
 		val yCenter = size.height / 2
 
 		if (rightXPosition.value == 0f) {
@@ -58,8 +61,8 @@ fun <T> CustomSlider(
 
 		drawRoundRect(
 			color = sliderConfiguration.barColor,
-			topLeft = Offset(sliderConfiguration.touchCircleRadius / 2, yCenter - sliderConfiguration.barHeight / 2),
-			size = Size(size.width - sliderConfiguration.touchCircleRadius / 2, sliderConfiguration.barHeight),
+			topLeft = Offset(sliderConfiguration.touchCircleRadius - sliderConfiguration.tickCircleRadius, yCenter - sliderConfiguration.barHeight / 2),
+			size = Size(size.width - sliderConfiguration.touchCircleRadius - 2 * sliderConfiguration.tickCircleRadius, sliderConfiguration.barHeight),
 			cornerRadius = CornerRadius(20f, 20f)
 		)
 

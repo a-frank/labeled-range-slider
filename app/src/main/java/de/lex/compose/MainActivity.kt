@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			Box(modifier = Modifier.padding(16.dp)) {
+			Box(modifier = Modifier.padding(0.dp)) {
 				val steps = (0..100).step(10)
 				CustomSlider(
 					steps.toList(),
