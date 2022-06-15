@@ -1,9 +1,6 @@
 package de.lex.compose
 
-import android.graphics.Paint
-import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -21,10 +18,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 
 @Composable
@@ -42,36 +36,40 @@ fun <T> CustomSlider(
 	var leftXPosition by remember { mutableStateOf(sliderConfiguration.touchCircleRadiusDp) }
 	var rightXPosition by remember { mutableStateOf(0.dp) }
 
+	val height = sliderConfiguration.touchCircleRadiusDp + sliderConfiguration.textOffsetDp + sliderConfiguration.textSizeSp.value.dp
+
 	Canvas(modifier = modifier
-		.height(70.dp)
+		.height(height)
 		.touchInteraction(remember { MutableInteractionSource() }) {
 			touchInteractionState = it
 		}
-		.background(Color.Red)
 	) {
-		// TODO fix height
-		val yCenter = size.height / 2
+		val barXCenter = size.height - sliderConfiguration.touchCircleRadius
 
 		if (rightXPosition.value == 0f) {
 			rightXPosition = size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
 		}
 
-		val leftCirclePosition = Offset(leftXPosition.toPx(), yCenter)
-		val rightCirclePosition = Offset(rightXPosition.toPx(), yCenter)
+		val leftCirclePosition = Offset(leftXPosition.toPx(), barXCenter)
+		val rightCirclePosition = Offset(rightXPosition.toPx(), barXCenter)
 
+		val barXStart = sliderConfiguration.touchCircleRadius - sliderConfiguration.tickCircleRadius
+		val barWidth = size.width - sliderConfiguration.touchCircleRadius - 2 * sliderConfiguration.tickCircleRadius
 		drawRoundRect(
 			color = sliderConfiguration.barColor,
-			topLeft = Offset(sliderConfiguration.touchCircleRadius - sliderConfiguration.tickCircleRadius, yCenter - sliderConfiguration.barHeight / 2),
-			size = Size(size.width - sliderConfiguration.touchCircleRadius - 2 * sliderConfiguration.tickCircleRadius, sliderConfiguration.barHeight),
+			topLeft = Offset(barXStart, barXCenter - sliderConfiguration.barHeight / 2),
+			size = Size(barWidth, sliderConfiguration.barHeight),
 			cornerRadius = CornerRadius(20f, 20f)
 		)
 
 		val (tickXCoordinates, tickSpacing) = drawTicks(
 			tickValues = steps,
+			barXStart,
+			barWidth,
 			sliderConfiguration = sliderConfiguration,
 			leftCirclePosition = leftCirclePosition,
 			rightCirclePosition = rightCirclePosition,
-			yCenter
+			barXCenter
 		)
 
 		drawCircleWithShadow(
@@ -162,74 +160,17 @@ private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {
 private fun isCircleTouched(touchX: Float, circlePositionX: Float, circleRadius: Float, touchTolerance: Float): Boolean =
 	touchX > (circlePositionX - circleRadius - touchTolerance) && touchX < (circlePositionX + circleRadius + touchTolerance)
 
-data class SliderConfiguration(
-	val touchCircleRadiusDp: Dp = 15.dp,
-	private val touchToleranceDp: Dp = 16.dp,
-	private val tickCircleRadiusDp: Dp = 4.dp,
-	private val barHeightDp: Dp = 10.dp,
-	private val textOffsetDp: Dp = 22.dp,
-	private val textSizeSp: TextUnit = 16.sp,
-	val barColor: Color = Color(255, 150, 0),
-	val textColorInRange: Color = Color.Black,
-	val textColorOutOfRange: Color = Color.LightGray,
-	val touchCircleColor: Color = Color.White,
-) {
-	context(DrawScope)
-	val touchCircleRadius: Float
-		get() = touchCircleRadiusDp.toPx()
-
-	context(DrawScope)
-	val touchTolerance: Float
-		get() = touchToleranceDp.toPx()
-
-	context(DrawScope)
-	val tickCircleRadius: Float
-		get() = tickCircleRadiusDp.toPx()
-
-	context(DrawScope)
-	val barHeight: Float
-		get() = barHeightDp.toPx()
-
-	context(DrawScope)
-	val textOffset: Float
-		get() = textOffsetDp.toPx()
-
-	context(DrawScope)
-	val textSizeValue: Float
-		get() = textSizeSp.toPx()
-
-	context(DrawScope)
-	val textInRangePaint: Paint
-		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-			color = textColorInRange.toArgb()
-			this.textSize = textSizeValue
-		}
-
-	context(DrawScope)
-	val textSelectedPaint: Paint
-		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-			color = textColorInRange.toArgb()
-			this.textSize = textSizeValue
-			this.typeface = Typeface.DEFAULT_BOLD
-		}
-
-	context(DrawScope)
-	val textOutOfRangePaint: Paint
-		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-			color = textColorOutOfRange.toArgb()
-			this.textSize = textSizeValue
-		}
-}
-
 private fun <T> DrawScope.drawTicks(
 	tickValues: List<T>,
+	barXStart: Float,
+	barWidth: Float,
 	sliderConfiguration: SliderConfiguration,
 	leftCirclePosition: Offset,
 	rightCirclePosition: Offset,
 	barYCenter: Float
 ): Pair<FloatArray, Float> {
-	var tickOffset = sliderConfiguration.touchCircleRadius
-	val tickSpacing = (size.width - 2 * sliderConfiguration.touchCircleRadius) / (tickValues.size - 1)
+	var tickOffset = barXStart + sliderConfiguration.tickCircleRadius
+	val tickSpacing = (barWidth - 2 * sliderConfiguration.tickCircleRadius) / (tickValues.size - 1)
 
 	val tickXCoordinates = mutableListOf<Float>()
 	tickValues.forEach { step ->
@@ -250,7 +191,7 @@ private fun <T> DrawScope.drawTicks(
 		}
 
 		drawCircle(
-			color = Color.Black,
+			color = sliderConfiguration.tickColor,
 			radius = sliderConfiguration.tickCircleRadius,
 			alpha = .1f,
 			center = tickCenter
