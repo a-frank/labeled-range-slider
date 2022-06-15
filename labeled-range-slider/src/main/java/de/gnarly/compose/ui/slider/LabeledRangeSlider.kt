@@ -94,32 +94,45 @@ fun <T> LabeledRangeSlider(
 
 		when (val currentState = touchInteractionState) {
 			is TouchInteraction.Down          -> {
-				val touchPosition = currentState.position
-				if (isCircleTouched(touchPosition.x, leftCirclePosition.x, sliderConfiguration.touchCircleRadius, sliderConfiguration.touchTolerance)) {
+				val touchPositionX = currentState.position.x
+				if (abs(touchPositionX - leftXPosition.toPx()) < abs(touchPositionX - rightXPosition.toPx())) {
+					leftXPosition = if (touchPositionX < (sliderConfiguration.touchCircleRadius / 2)) {
+						sliderConfiguration.touchCircleRadiusDp
+					} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
+						leftXPosition
+					} else {
+						touchPositionX.toDp()
+					}
 					moveLeft = true
-				}
-
-				if (isCircleTouched(touchPosition.x, rightCirclePosition.x, sliderConfiguration.touchCircleRadius, sliderConfiguration.touchTolerance)) {
+				} else {
+					rightXPosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadiusDp).toPx()) {
+						size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
+					} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
+						rightXPosition
+					} else {
+						touchPositionX.toDp()
+					}
 					moveRight = true
 				}
 			}
 			is TouchInteraction.Move          -> {
+				val touchPositionX = currentState.position.x
 				if (moveLeft) {
-					leftXPosition = if (currentState.position.x < (sliderConfiguration.touchCircleRadius / 2)) {
+					leftXPosition = if (touchPositionX < (sliderConfiguration.touchCircleRadius / 2)) {
 						sliderConfiguration.touchCircleRadiusDp
-					} else if (currentState.position.x > (rightCirclePosition.x - tickSpacing)) {
+					} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
 						leftXPosition
 					} else {
-						currentState.position.x.toDp()
+						touchPositionX.toDp()
 					}
 				}
 				if (moveRight) {
-					rightXPosition = if (currentState.position.x > (size.width.toDp() - sliderConfiguration.touchCircleRadiusDp).toPx()) {
+					rightXPosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadiusDp).toPx()) {
 						size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
-					} else if (currentState.position.x < (leftCirclePosition.x + tickSpacing)) {
+					} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
 						rightXPosition
 					} else {
-						currentState.position.x.toDp()
+						touchPositionX.toDp()
 					}
 				}
 			}
@@ -164,9 +177,6 @@ private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {
 	}
 	return minElem to minIdx
 }
-
-private fun isCircleTouched(touchX: Float, circlePositionX: Float, circleRadius: Float, touchTolerance: Float): Boolean =
-	touchX > (circlePositionX - circleRadius - touchTolerance) && touchX < (circlePositionX + circleRadius + touchTolerance)
 
 private fun <T> DrawScope.drawTicks(
 	tickValues: List<T>,
