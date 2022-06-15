@@ -44,32 +44,40 @@ fun <T> LabeledRangeSlider(
 			touchInteractionState = it
 		}
 	) {
-		val barXCenter = size.height - sliderConfiguration.touchCircleRadius
+		val barYCenter = size.height - sliderConfiguration.touchCircleRadius
 
 		if (rightXPosition.value == 0f) {
 			rightXPosition = size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
 		}
 
-		val leftCirclePosition = Offset(leftXPosition.toPx(), barXCenter)
-		val rightCirclePosition = Offset(rightXPosition.toPx(), barXCenter)
+		val leftCirclePosition = Offset(leftXPosition.toPx(), barYCenter)
+		val rightCirclePosition = Offset(rightXPosition.toPx(), barYCenter)
 
 		val barXStart = sliderConfiguration.touchCircleRadius - sliderConfiguration.tickCircleRadius
 		val barWidth = size.width - sliderConfiguration.touchCircleRadius - 2 * sliderConfiguration.tickCircleRadius
+		val barTopLeft = Offset(barXStart, barYCenter - sliderConfiguration.barHeight / 2)
+		val barCornerRadius = CornerRadius(20f, 20f)
 		drawRoundRect(
-			color = sliderConfiguration.barColor,
-			topLeft = Offset(barXStart, barXCenter - sliderConfiguration.barHeight / 2),
+			color = sliderConfiguration.textColorOutOfRange,
+			topLeft = barTopLeft,
 			size = Size(barWidth, sliderConfiguration.barHeight),
-			cornerRadius = CornerRadius(20f, 20f)
+			cornerRadius = barCornerRadius
+		)
+
+		drawRect(
+			color = sliderConfiguration.barColor,
+			topLeft = Offset(leftCirclePosition.x, barYCenter - sliderConfiguration.barHeight / 2),
+			size = Size(rightCirclePosition.x - leftCirclePosition.x, sliderConfiguration.barHeight)
 		)
 
 		val (tickXCoordinates, tickSpacing) = drawTicks(
 			tickValues = steps,
-			barXStart,
-			barWidth,
+			barXStart = barXStart,
+			barWidth = barWidth,
 			sliderConfiguration = sliderConfiguration,
 			leftCirclePosition = leftCirclePosition,
 			rightCirclePosition = rightCirclePosition,
-			barXCenter
+			barYCenter = barYCenter
 		)
 
 		drawCircleWithShadow(
