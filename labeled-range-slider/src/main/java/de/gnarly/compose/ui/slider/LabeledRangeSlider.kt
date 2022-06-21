@@ -93,44 +93,20 @@ fun <T> LabeledRangeSlider(
 			is TouchInteraction.Down          -> {
 				val touchPositionX = currentState.position.x
 				if (abs(touchPositionX - leftCirclePosition.x) < abs(touchPositionX - rightCirclePosition.x)) {
-					leftCirclePosition = if (touchPositionX < (sliderConfiguration.touchCircleRadiusPx / 2)) {
-						leftCirclePosition.copy(x = sliderConfiguration.touchCircleRadius.toPx())
-					} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
-						leftCirclePosition
-					} else {
-						leftCirclePosition.copy(x = touchPositionX)
-					}
+					leftCirclePosition = calculateNewLeftCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, tickSpacing, sliderConfiguration)
 					moveLeft = true
 				} else {
-					rightCirclePosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadius).toPx()) {
-						rightCirclePosition.copy(x = size.width - sliderConfiguration.touchCircleRadiusPx)
-					} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
-						rightCirclePosition
-					} else {
-						rightCirclePosition.copy(x = touchPositionX)
-					}
+					rightCirclePosition = calculateNewRightCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, tickSpacing, sliderConfiguration)
 					moveRight = true
 				}
 			}
 			is TouchInteraction.Move          -> {
 				val touchPositionX = currentState.position.x
 				if (moveLeft) {
-					leftCirclePosition = if (touchPositionX < (sliderConfiguration.touchCircleRadiusPx / 2)) {
-						leftCirclePosition.copy(x = sliderConfiguration.touchCircleRadiusPx)
-					} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
-						leftCirclePosition
-					} else {
-						leftCirclePosition.copy(x = touchPositionX)
-					}
+					leftCirclePosition = calculateNewLeftCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, tickSpacing, sliderConfiguration)
 				}
 				if (moveRight) {
-					rightCirclePosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadius).toPx()) {
-						rightCirclePosition.copy(x = size.width - sliderConfiguration.touchCircleRadiusPx)
-					} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
-						rightCirclePosition
-					} else {
-						rightCirclePosition.copy(x = touchPositionX)
-					}
+					rightCirclePosition = calculateNewRightCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, tickSpacing, sliderConfiguration)
 				}
 			}
 			is TouchInteraction.NoInteraction -> {
@@ -153,10 +129,36 @@ fun <T> LabeledRangeSlider(
 	}
 }
 
-@Preview
-@Composable
-fun CustomSliderPreview() {
-	LabeledRangeSlider((0..100).step(10).toList(), { _, _ -> })
+private fun DrawScope.calculateNewLeftCirclePosition(
+	touchPositionX: Float,
+	leftCirclePosition: Offset,
+	rightCirclePosition: Offset,
+	tickSpacing: Float,
+	sliderConfiguration: SliderConfiguration
+): Offset {
+	return if (touchPositionX < (sliderConfiguration.touchCircleRadiusPx / 2)) {
+		leftCirclePosition.copy(x = sliderConfiguration.touchCircleRadius.toPx())
+	} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
+		leftCirclePosition
+	} else {
+		leftCirclePosition.copy(x = touchPositionX)
+	}
+}
+
+private fun DrawScope.calculateNewRightCirclePosition(
+	touchPositionX: Float,
+	leftCirclePosition: Offset,
+	rightCirclePosition: Offset,
+	tickSpacing: Float,
+	sliderConfiguration: SliderConfiguration
+): Offset {
+	return if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadius).toPx()) {
+		rightCirclePosition.copy(x = size.width - sliderConfiguration.touchCircleRadiusPx)
+	} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
+		rightCirclePosition
+	} else {
+		rightCirclePosition.copy(x = touchPositionX)
+	}
 }
 
 private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {
@@ -258,4 +260,10 @@ private fun DrawScope.drawCircleWithShadow(position: Offset, sliderConfiguration
 		radius = sliderConfiguration.touchCircleRadiusPx,
 		center = position
 	)
+}
+
+@Preview
+@Composable
+fun CustomSliderPreview() {
+	LabeledRangeSlider((0..100).step(10).toList(), { _, _ -> })
 }
