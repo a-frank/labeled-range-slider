@@ -48,7 +48,7 @@ fun <T> LabeledRangeSlider(
 		val barYCenter = size.height - sliderConfiguration.touchCircleRadiusPx
 		val barXStart = sliderConfiguration.touchCircleRadiusPx - sliderConfiguration.tickCircleRadiusPx
 		val barWidth = size.width - 2 * barXStart
-		val barCornerRadius = CornerRadius(20f, 20f)
+		val barCornerRadius = CornerRadius(sliderConfiguration.barCornerRadiusPx, sliderConfiguration.barCornerRadiusPx)
 
 		if (!initialized) {
 			leftCirclePosition = leftCirclePosition.copy(barXStart + sliderConfiguration.tickCircleRadiusPx, barYCenter)
@@ -81,14 +81,12 @@ fun <T> LabeledRangeSlider(
 
 		drawCircleWithShadow(
 			position = leftCirclePosition,
-			radius = sliderConfiguration.touchCircleRadiusPx,
-			color = sliderConfiguration.touchCircleColor
+			sliderConfiguration = sliderConfiguration
 		)
 
 		drawCircleWithShadow(
 			position = rightCirclePosition,
-			radius = sliderConfiguration.touchCircleRadiusPx,
-			color = sliderConfiguration.touchCircleColor
+			sliderConfiguration = sliderConfiguration
 		)
 
 		when (val currentState = touchInteractionState) {
@@ -235,7 +233,7 @@ private fun <T> DrawScope.drawTicks(
 	return tickXCoordinates.toFloatArray() to tickSpacing
 }
 
-private fun DrawScope.drawCircleWithShadow(position: Offset, radius: Float, color: Color) {
+private fun DrawScope.drawCircleWithShadow(position: Offset, sliderConfiguration: SliderConfiguration) {
 	val transparentColor = Color.Transparent.value.toInt()
 
 	drawIntoCanvas {
@@ -243,21 +241,21 @@ private fun DrawScope.drawCircleWithShadow(position: Offset, radius: Float, colo
 		val frameworkPaint = paint.asFrameworkPaint()
 		frameworkPaint.color = transparentColor
 		frameworkPaint.setShadowLayer(
-			2.dp.toPx(),
+			sliderConfiguration.touchCircleShadowSizePx,
 			0f,
 			0f,
 			Color.DarkGray.toArgb()
 		)
 		it.drawCircle(
 			position,
-			radius,
+			sliderConfiguration.touchCircleRadiusPx,
 			paint
 		)
 	}
 
 	drawCircle(
-		color = color,
-		radius = radius,
+		color = sliderConfiguration.touchCircleColor,
+		radius = sliderConfiguration.touchCircleRadiusPx,
 		center = position
 	)
 }

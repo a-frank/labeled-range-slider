@@ -12,9 +12,11 @@ import androidx.compose.ui.unit.sp
 
 data class SliderConfiguration(
 	val touchCircleRadius: Dp = 16.dp,
+	val touchCircleShadowSize: Dp = 4.dp,
 	val tickColor: Color = Color.DarkGray,
 	val barHeight: Dp = 12.dp,
-	val textOffset: Dp = 4.dp,
+	val barCornerRadius: Dp = 6.dp,
+	val textOffset: Dp = 8.dp,
 	val textSize: TextUnit = 16.sp,
 	val barColor: Color = Color.Cyan,
 	val textColorInRange: Color = Color.Black,
@@ -26,12 +28,20 @@ data class SliderConfiguration(
 		get() = touchCircleRadius.toPx()
 
 	context(DrawScope)
+			internal val touchCircleShadowSizePx: Float
+		get() = touchCircleShadowSize.toPx()
+
+	context(DrawScope)
 			internal val tickCircleRadiusPx: Float
 		get() = (barHeight / 4).toPx()
 
 	context(DrawScope)
 			internal val barHeightPx: Float
 		get() = barHeight.toPx()
+
+	context(DrawScope)
+			internal val barCornerRadiusPx: Float
+		get() = barCornerRadius.toPx()
 
 	context(DrawScope)
 			internal val textSizePx: Float
