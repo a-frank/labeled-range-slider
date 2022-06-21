@@ -33,10 +33,11 @@ fun <T> LabeledRangeSlider(
 	var touchInteractionState by remember { mutableStateOf<TouchInteraction>(TouchInteraction.NoInteraction) }
 	var moveLeft by remember { mutableStateOf(false) }
 	var moveRight by remember { mutableStateOf(false) }
-	var leftXPosition by remember { mutableStateOf(sliderConfiguration.touchCircleRadiusDp) }
-	var rightXPosition by remember { mutableStateOf(0.dp) }
+	var initialized by remember { mutableStateOf(false) }
+	var leftCirclePosition by remember { mutableStateOf(Offset(0f, 0f)) }
+	var rightCirclePosition by remember { mutableStateOf(Offset(0f, 0f)) }
 
-	val height = sliderConfiguration.touchCircleRadiusDp + sliderConfiguration.textOffsetDp + sliderConfiguration.textSizeSp.value.dp
+	val height = sliderConfiguration.touchCircleRadius * 2 + sliderConfiguration.textSize.value.dp + sliderConfiguration.textOffset
 
 	Canvas(modifier = modifier
 		.height(height)
@@ -44,30 +45,28 @@ fun <T> LabeledRangeSlider(
 			touchInteractionState = it
 		}
 	) {
-		val barYCenter = size.height - sliderConfiguration.touchCircleRadius
+		val barYCenter = size.height - sliderConfiguration.touchCircleRadiusPx
+		val barXStart = sliderConfiguration.touchCircleRadiusPx - sliderConfiguration.tickCircleRadiusPx
+		val barWidth = size.width - 2 * barXStart
+		val barCornerRadius = CornerRadius(20f, 20f)
 
-		if (rightXPosition.value == 0f) {
-			rightXPosition = size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
+		if (!initialized) {
+			leftCirclePosition = leftCirclePosition.copy(barXStart + sliderConfiguration.tickCircleRadiusPx, barYCenter)
+			rightCirclePosition = rightCirclePosition.copy(barWidth + barXStart - sliderConfiguration.tickCircleRadiusPx, barYCenter)
+			initialized = true
 		}
 
-		val leftCirclePosition = Offset(leftXPosition.toPx(), barYCenter)
-		val rightCirclePosition = Offset(rightXPosition.toPx(), barYCenter)
-
-		val barXStart = sliderConfiguration.touchCircleRadius - sliderConfiguration.tickCircleRadius
-		val barWidth = size.width - sliderConfiguration.touchCircleRadius - 2 * sliderConfiguration.tickCircleRadius
-		val barTopLeft = Offset(barXStart, barYCenter - sliderConfiguration.barHeight / 2)
-		val barCornerRadius = CornerRadius(20f, 20f)
 		drawRoundRect(
 			color = sliderConfiguration.textColorOutOfRange,
-			topLeft = barTopLeft,
-			size = Size(barWidth, sliderConfiguration.barHeight),
+			topLeft = Offset(barXStart, barYCenter - sliderConfiguration.barHeightPx / 2),
+			size = Size(barWidth, sliderConfiguration.barHeightPx),
 			cornerRadius = barCornerRadius
 		)
 
 		drawRect(
 			color = sliderConfiguration.barColor,
-			topLeft = Offset(leftCirclePosition.x, barYCenter - sliderConfiguration.barHeight / 2),
-			size = Size(rightCirclePosition.x - leftCirclePosition.x, sliderConfiguration.barHeight)
+			topLeft = Offset(leftCirclePosition.x, barYCenter - sliderConfiguration.barHeightPx / 2),
+			size = Size(rightCirclePosition.x - leftCirclePosition.x, sliderConfiguration.barHeightPx)
 		)
 
 		val (tickXCoordinates, tickSpacing) = drawTicks(
@@ -82,35 +81,35 @@ fun <T> LabeledRangeSlider(
 
 		drawCircleWithShadow(
 			position = leftCirclePosition,
-			radius = sliderConfiguration.touchCircleRadius,
+			radius = sliderConfiguration.touchCircleRadiusPx,
 			color = sliderConfiguration.touchCircleColor
 		)
 
 		drawCircleWithShadow(
 			position = rightCirclePosition,
-			radius = sliderConfiguration.touchCircleRadius,
+			radius = sliderConfiguration.touchCircleRadiusPx,
 			color = sliderConfiguration.touchCircleColor
 		)
 
 		when (val currentState = touchInteractionState) {
 			is TouchInteraction.Down          -> {
 				val touchPositionX = currentState.position.x
-				if (abs(touchPositionX - leftXPosition.toPx()) < abs(touchPositionX - rightXPosition.toPx())) {
-					leftXPosition = if (touchPositionX < (sliderConfiguration.touchCircleRadius / 2)) {
-						sliderConfiguration.touchCircleRadiusDp
+				if (abs(touchPositionX - leftCirclePosition.x) < abs(touchPositionX - rightCirclePosition.x)) {
+					leftCirclePosition = if (touchPositionX < (sliderConfiguration.touchCircleRadiusPx / 2)) {
+						leftCirclePosition.copy(x = sliderConfiguration.touchCircleRadius.toPx())
 					} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
-						leftXPosition
+						leftCirclePosition
 					} else {
-						touchPositionX.toDp()
+						leftCirclePosition.copy(x = touchPositionX)
 					}
 					moveLeft = true
 				} else {
-					rightXPosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadiusDp).toPx()) {
-						size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
+					rightCirclePosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadius).toPx()) {
+						rightCirclePosition.copy(x = size.width - sliderConfiguration.touchCircleRadiusPx)
 					} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
-						rightXPosition
+						rightCirclePosition
 					} else {
-						touchPositionX.toDp()
+						rightCirclePosition.copy(x = touchPositionX)
 					}
 					moveRight = true
 				}
@@ -118,34 +117,34 @@ fun <T> LabeledRangeSlider(
 			is TouchInteraction.Move          -> {
 				val touchPositionX = currentState.position.x
 				if (moveLeft) {
-					leftXPosition = if (touchPositionX < (sliderConfiguration.touchCircleRadius / 2)) {
-						sliderConfiguration.touchCircleRadiusDp
+					leftCirclePosition = if (touchPositionX < (sliderConfiguration.touchCircleRadiusPx / 2)) {
+						leftCirclePosition.copy(x = sliderConfiguration.touchCircleRadiusPx)
 					} else if (touchPositionX > (rightCirclePosition.x - tickSpacing)) {
-						leftXPosition
+						leftCirclePosition
 					} else {
-						touchPositionX.toDp()
+						leftCirclePosition.copy(x = touchPositionX)
 					}
 				}
 				if (moveRight) {
-					rightXPosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadiusDp).toPx()) {
-						size.width.toDp() - sliderConfiguration.touchCircleRadiusDp
+					rightCirclePosition = if (touchPositionX > (size.width.toDp() - sliderConfiguration.touchCircleRadius).toPx()) {
+						rightCirclePosition.copy(x = size.width - sliderConfiguration.touchCircleRadiusPx)
 					} else if (touchPositionX < (leftCirclePosition.x + tickSpacing)) {
-						rightXPosition
+						rightCirclePosition
 					} else {
-						touchPositionX.toDp()
+						rightCirclePosition.copy(x = touchPositionX)
 					}
 				}
 			}
 			is TouchInteraction.NoInteraction -> {
-				val (closestLeftValue, closestLeftIndex) = tickXCoordinates.getClosestNumber(leftXPosition.toPx())
-				val (closestRightValue, closestRightIndex) = tickXCoordinates.getClosestNumber(rightXPosition.toPx())
+				val (closestLeftValue, closestLeftIndex) = tickXCoordinates.getClosestNumber(leftCirclePosition.x)
+				val (closestRightValue, closestRightIndex) = tickXCoordinates.getClosestNumber(rightCirclePosition.x)
 				if (moveLeft) {
-					leftXPosition = closestLeftValue.toDp()
+					leftCirclePosition = leftCirclePosition.copy(x = closestLeftValue)
 					onRangeChanged(steps[closestLeftIndex], steps[closestRightIndex])
 				}
 
 				if (moveRight) {
-					rightXPosition = closestRightValue.toDp()
+					rightCirclePosition = rightCirclePosition.copy(x = closestRightValue)
 					onRangeChanged(steps[closestLeftIndex], steps[closestRightIndex])
 				}
 
@@ -187,8 +186,8 @@ private fun <T> DrawScope.drawTicks(
 	rightCirclePosition: Offset,
 	barYCenter: Float
 ): Pair<FloatArray, Float> {
-	var tickOffset = barXStart + sliderConfiguration.tickCircleRadius
-	val tickSpacing = (barWidth - 2 * sliderConfiguration.tickCircleRadius) / (tickValues.size - 1)
+	var tickOffset = barXStart + sliderConfiguration.tickCircleRadiusPx
+	val tickSpacing = (barWidth - 2 * sliderConfiguration.tickCircleRadiusPx) / (tickValues.size - 1)
 
 	val tickXCoordinates = mutableListOf<Float>()
 	tickValues.forEach { step ->
@@ -196,11 +195,11 @@ private fun <T> DrawScope.drawTicks(
 		val tickCenter = Offset(tickOffset, barYCenter)
 
 		val isCurrentlySelectedByLeftCircle =
-			(leftCirclePosition.x > (tickCenter.x - sliderConfiguration.tickCircleRadius / 2)) &&
-					(leftCirclePosition.x < (tickCenter.x + sliderConfiguration.tickCircleRadius / 2))
+			(leftCirclePosition.x > (tickCenter.x - sliderConfiguration.tickCircleRadiusPx / 2)) &&
+					(leftCirclePosition.x < (tickCenter.x + sliderConfiguration.tickCircleRadiusPx / 2))
 		val isCurrentlySelectedByRightCircle =
-			(rightCirclePosition.x > (tickCenter.x - sliderConfiguration.tickCircleRadius / 2)) &&
-					(rightCirclePosition.x < (tickCenter.x + sliderConfiguration.tickCircleRadius / 2))
+			(rightCirclePosition.x > (tickCenter.x - sliderConfiguration.tickCircleRadiusPx / 2)) &&
+					(rightCirclePosition.x < (tickCenter.x + sliderConfiguration.tickCircleRadiusPx / 2))
 
 		val paint = when {
 			isCurrentlySelectedByLeftCircle || isCurrentlySelectedByRightCircle         -> sliderConfiguration.textSelectedPaint
@@ -210,7 +209,7 @@ private fun <T> DrawScope.drawTicks(
 
 		drawCircle(
 			color = sliderConfiguration.tickColor,
-			radius = sliderConfiguration.tickCircleRadius,
+			radius = sliderConfiguration.tickCircleRadiusPx,
 			alpha = .1f,
 			center = tickCenter
 		)
@@ -225,8 +224,8 @@ private fun <T> DrawScope.drawTicks(
 			}
 			it.nativeCanvas.drawText(
 				stepText,
-				tickCenter.x - (stepText.length * sliderConfiguration.textSizeValue) / 3,
-				tickCenter.y - sliderConfiguration.textOffset,
+				tickCenter.x - (stepText.length * sliderConfiguration.textSizePx) / 3,
+				sliderConfiguration.textSizePx,
 				paint
 			)
 		}

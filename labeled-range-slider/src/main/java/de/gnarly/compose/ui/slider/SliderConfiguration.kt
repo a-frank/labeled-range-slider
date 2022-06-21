@@ -11,56 +11,51 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 data class SliderConfiguration(
-	val touchCircleRadiusDp: Dp = 16.dp,
-	private val tickCircleRadiusDp: Dp = 4.dp,
+	val touchCircleRadius: Dp = 16.dp,
 	val tickColor: Color = Color.DarkGray,
-	private val barHeightDp: Dp = 16.dp,
-	val textOffsetDp: Dp = 24.dp,
-	val textSizeSp: TextUnit = 16.sp,
+	val barHeight: Dp = 12.dp,
+	val textOffset: Dp = 4.dp,
+	val textSize: TextUnit = 16.sp,
 	val barColor: Color = Color.Cyan,
 	val textColorInRange: Color = Color.Black,
 	val textColorOutOfRange: Color = Color.LightGray,
 	val touchCircleColor: Color = Color.White,
 ) {
 	context(DrawScope)
-	val touchCircleRadius: Float
-		get() = touchCircleRadiusDp.toPx()
+			internal val touchCircleRadiusPx: Float
+		get() = touchCircleRadius.toPx()
 
 	context(DrawScope)
-	val tickCircleRadius: Float
-		get() = tickCircleRadiusDp.toPx()
+			internal val tickCircleRadiusPx: Float
+		get() = (barHeight / 4).toPx()
 
 	context(DrawScope)
-	val barHeight: Float
-		get() = barHeightDp.toPx()
+			internal val barHeightPx: Float
+		get() = barHeight.toPx()
 
 	context(DrawScope)
-	val textOffset: Float
-		get() = textOffsetDp.toPx()
+			internal val textSizePx: Float
+		get() = textSize.toPx()
 
 	context(DrawScope)
-	val textSizeValue: Float
-		get() = textSizeSp.toPx()
-
-	context(DrawScope)
-	val textInRangePaint: Paint
+			internal val textInRangePaint: Paint
 		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 			color = textColorInRange.toArgb()
-			this.textSize = textSizeValue
+			this.textSize = textSizePx
 		}
 
 	context(DrawScope)
-	val textSelectedPaint: Paint
+			internal val textSelectedPaint: Paint
 		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 			color = textColorInRange.toArgb()
-			this.textSize = textSizeValue
+			this.textSize = textSizePx
 			this.typeface = Typeface.DEFAULT_BOLD
 		}
 
 	context(DrawScope)
-	val textOutOfRangePaint: Paint
+			internal val textOutOfRangePaint: Paint
 		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 			color = textColorOutOfRange.toArgb()
-			this.textSize = textSizeValue
+			this.textSize = textSizePx
 		}
 }
