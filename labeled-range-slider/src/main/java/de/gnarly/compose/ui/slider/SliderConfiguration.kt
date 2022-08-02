@@ -3,8 +3,8 @@ package de.gnarly.compose.ui.slider
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -23,47 +23,38 @@ data class SliderConfiguration(
 	val textColorOutOfRange: Color = Color.LightGray,
 	val touchCircleColor: Color = Color.White,
 ) {
-	context(DrawScope)
-			internal val touchCircleRadiusPx: Float
+	context(Density) internal val touchCircleRadiusPx: Float
 		get() = touchCircleRadius.toPx()
 
-	context(DrawScope)
-			internal val touchCircleShadowSizePx: Float
+	context(Density) internal val touchCircleShadowSizePx: Float
 		get() = touchCircleShadowSize.toPx()
 
-	context(DrawScope)
-			internal val tickCircleRadiusPx: Float
+	context(Density) internal val tickCircleRadiusPx: Float
 		get() = (barHeight / 4).toPx()
 
-	context(DrawScope)
-			internal val barHeightPx: Float
+	context(Density) internal val barHeightPx: Float
 		get() = barHeight.toPx()
 
-	context(DrawScope)
-			internal val barCornerRadiusPx: Float
+	context(Density) internal val barCornerRadiusPx: Float
 		get() = barCornerRadius.toPx()
 
-	context(DrawScope)
-			internal val textSizePx: Float
+	context(Density) internal val textSizePx: Float
 		get() = textSize.toPx()
 
-	context(DrawScope)
-			internal val textInRangePaint: Paint
+	context(Density) internal val textInRangePaint: Paint
 		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 			color = textColorInRange.toArgb()
 			this.textSize = textSizePx
 		}
 
-	context(DrawScope)
-			internal val textSelectedPaint: Paint
+	context(Density) internal val textSelectedPaint: Paint
 		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 			color = textColorInRange.toArgb()
 			this.textSize = textSizePx
 			this.typeface = Typeface.DEFAULT_BOLD
 		}
 
-	context(DrawScope)
-			internal val textOutOfRangePaint: Paint
+	context(Density) internal val textOutOfRangePaint: Paint
 		get() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 			color = textColorOutOfRange.toArgb()
 			this.textSize = textSizePx
