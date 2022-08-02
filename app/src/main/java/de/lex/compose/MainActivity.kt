@@ -20,14 +20,14 @@ class MainActivity : ComponentActivity() {
 
 		setContent {
 			Box(modifier = Modifier.padding(16.dp)) {
-				val steps = (0..100).step(10)
-				var lowerBound by rememberSaveable { mutableStateOf(10) }
-				var upperBound by rememberSaveable { mutableStateOf(90) }
+				val steps = (0..100).step(10).toList()
+				var lowerBound by rememberSaveable { mutableStateOf(steps[1]) }
+				var upperBound by rememberSaveable { mutableStateOf(steps[steps.size - 2]) }
 
 				LabeledRangeSlider(
 					selectedLowerBound = lowerBound,
 					selectedUpperBound = upperBound,
-					steps = steps.toList(),
+					steps = steps,
 					onRangeChanged = { lower, upper ->
 						lowerBound = lower
 						upperBound = upper

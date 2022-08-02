@@ -52,7 +52,7 @@ fun <T : Number> LabeledRangeSlider(
 	val barWidth = sizeAndDensity.derive { composableSize.width - 2 * barXStart }
 	val barHeight = sizeAndDensity.derive { barYCenter - sliderConfiguration.barHeightPx / 2 }
 
-	val (tickXCoordinates, tickSpacing) = sizeAndDensity.derive {
+	val (tickXCoordinates, tickSpacing) = sizeAndDensity.derive(steps) {
 		calculateTickCoordinatesAndSpacing(
 			numberOfTicks = steps.size,
 			barXStart = barXStart,
@@ -303,8 +303,8 @@ private fun DrawScope.drawCircleWithShadow(position: Offset, sliderConfiguration
 }
 
 @Composable
-private fun <T> Pair<IntSize, Density>.derive(block: Density.() -> T): T =
-	remember(first) {
+private fun <T> Pair<IntSize, Density>.derive(additionalKey: Any? = null, block: Density.() -> T): T =
+	remember(key1 = first, key2 = additionalKey) {
 		second.block()
 	}
 
