@@ -43,8 +43,7 @@ fun <T : Number> LabeledRangeSlider(
 	var moveRight by remember { mutableStateOf(false) }
 
 	var composableSize by remember { mutableStateOf(IntSize(0, 0)) }
-	val currentLocalDensity = LocalDensity.current
-	val sizeAndDensity = composableSize to currentLocalDensity
+	val sizeAndDensity = composableSize to LocalDensity.current
 
 	val height = remember(key1 = composableSize) { sliderConfiguration.touchCircleRadius * 2 + sliderConfiguration.textSize.value.dp + sliderConfiguration.textOffset }
 	val barCornerRadius = sizeAndDensity.derive { CornerRadius(sliderConfiguration.barCornerRadiusPx, sliderConfiguration.barCornerRadiusPx) }
