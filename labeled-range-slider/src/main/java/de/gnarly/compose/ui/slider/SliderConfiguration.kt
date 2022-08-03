@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.sp
 data class SliderConfiguration(
 	val touchCircleRadius: Dp = 16.dp,
 	val touchCircleShadowSize: Dp = 4.dp,
+	val touchCircleShadowTouchedSizeAddition: Dp = 2.dp,
 	val tickColor: Color = Color.DarkGray,
 	val barHeight: Dp = 12.dp,
 	val barCornerRadius: Dp = 6.dp,
@@ -28,6 +29,9 @@ data class SliderConfiguration(
 
 	context(Density) internal val touchCircleShadowSizePx: Float
 		get() = touchCircleShadowSize.toPx()
+
+	context(Density) internal val touchCircleShadowTouchedSizeAdditionPx: Float
+		get() = touchCircleShadowTouchedSizeAddition.toPx()
 
 	context(Density) internal val tickCircleRadiusPx: Float
 		get() = (barHeight / 4).toPx()
