@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Composetests" parent="android:Theme.Material.Light.DarkActionBar" />
+    <style name="Theme.LabeledRangeSliderDemo" parent="android:Theme.Material.Light.DarkActionBar" />
 </resources>
