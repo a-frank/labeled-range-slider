@@ -1,6 +1,7 @@
 package de.lex.compose
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,9 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			Box(modifier = Modifier.padding(16.dp)) {
+			Box(
+				modifier = Modifier.padding(16.dp)
+			) {
 				val steps = (0..100).step(10).toList()
 				var lowerBound by rememberSaveable { mutableStateOf(steps[1]) }
 				var upperBound by rememberSaveable { mutableStateOf(steps[steps.size - 2]) }
@@ -31,10 +34,15 @@ class MainActivity : ComponentActivity() {
 					onRangeChanged = { lower, upper ->
 						lowerBound = lower
 						upperBound = upper
+						Log.i(LOG_TAG, "Updated range $lower <> $upper")
 					},
 					modifier = Modifier.fillMaxWidth()
 				)
 			}
 		}
+	}
+
+	private companion object {
+		val LOG_TAG = MainActivity::class.simpleName
 	}
 }

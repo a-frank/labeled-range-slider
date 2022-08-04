@@ -11,36 +11,37 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 data class SliderConfiguration(
+	val barHeight: Dp = 12.dp,
+	val barColor: Color = Color.LightGray,
+	val barColorInRange: Color = Color.Cyan,
+	val barCornerRadius: Dp = 6.dp,
 	val touchCircleRadius: Dp = 16.dp,
 	val touchCircleShadowSize: Dp = 4.dp,
 	val touchCircleShadowTouchedSizeAddition: Dp = 2.dp,
-	val tickColor: Color = Color.DarkGray,
-	val barHeight: Dp = 12.dp,
-	val barCornerRadius: Dp = 6.dp,
-	val textOffset: Dp = 8.dp,
-	val textSize: TextUnit = 16.sp,
-	val barColor: Color = Color.Cyan,
+	val touchCircleColor: Color = Color.White,
 	val textColorInRange: Color = Color.Black,
 	val textColorOutOfRange: Color = Color.LightGray,
-	val touchCircleColor: Color = Color.White,
+	val textSize: TextUnit = 16.sp,
+	val textOffset: Dp = 8.dp,
+	val stepMarkerColor: Color = Color.DarkGray,
 ) {
-	context(Density) internal val touchCircleRadiusPx: Float
-		get() = touchCircleRadius.toPx()
-
-	context(Density) internal val touchCircleShadowSizePx: Float
-		get() = touchCircleShadowSize.toPx()
-
-	context(Density) internal val touchCircleShadowTouchedSizeAdditionPx: Float
-		get() = touchCircleShadowTouchedSizeAddition.toPx()
-
-	context(Density) internal val tickCircleRadiusPx: Float
-		get() = (barHeight / 4).toPx()
-
 	context(Density) internal val barHeightPx: Float
 		get() = barHeight.toPx()
 
-	context(Density) internal val barCornerRadiusPx: Float
+	context(Density) internal val barCornerRadiusPx
 		get() = barCornerRadius.toPx()
+
+	context(Density) internal val touchCircleRadiusPx
+		get() = touchCircleRadius.toPx()
+
+	context(Density) internal val touchCircleShadowSizePx
+		get() = touchCircleShadowSize.toPx()
+
+	context(Density) internal val touchCircleShadowTouchedSizeAdditionPx
+		get() = touchCircleShadowTouchedSizeAddition.toPx()
+
+	context(Density) internal val stepMarkerRadiusPx: Float
+		get() = (barHeight / 4).toPx()
 
 	context(Density) internal val textSizePx: Float
 		get() = textSize.toPx()

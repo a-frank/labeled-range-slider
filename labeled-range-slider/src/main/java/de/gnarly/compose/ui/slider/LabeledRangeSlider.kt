@@ -32,7 +32,7 @@ fun <T : Number> LabeledRangeSlider(
 	steps: List<T>,
 	onRangeChanged: (lower: T, upper: T) -> Unit,
 	modifier: Modifier = Modifier,
-	sliderConfiguration: SliderConfiguration = SliderConfiguration()
+	sliderConfig: SliderConfiguration = SliderConfiguration()
 ) {
 	require(steps.size > 2) { "List of steps has to be at least of size 2" }
 	require(steps.contains(selectedLowerBound)) { "selectedLowerBound has to be part of the provided steps" }
@@ -43,132 +43,185 @@ fun <T : Number> LabeledRangeSlider(
 	var moveRight by remember { mutableStateOf(false) }
 
 	var composableSize by remember { mutableStateOf(IntSize(0, 0)) }
+
 	val currentDensity = LocalDensity.current
 	val sizeAndDensity = composableSize to currentDensity
 
-	val height = remember(key1 = composableSize) { sliderConfiguration.touchCircleRadius * 2 + sliderConfiguration.textSize.value.dp + sliderConfiguration.textOffset }
-	val barCornerRadius = sizeAndDensity.derive { CornerRadius(sliderConfiguration.barCornerRadiusPx, sliderConfiguration.barCornerRadiusPx) }
-	val barYCenter = sizeAndDensity.derive { composableSize.height - sliderConfiguration.touchCircleRadiusPx }
-	val barXStart = sizeAndDensity.derive { sliderConfiguration.touchCircleRadiusPx - sliderConfiguration.tickCircleRadiusPx }
+	val height = remember(key1 = sliderConfig) { sliderConfig.touchCircleRadius * 2 + sliderConfig.textSize.value.dp + sliderConfig.textOffset }
+	val barYCenter = sizeAndDensity.derive { composableSize.height - sliderConfig.touchCircleRadiusPx }
+	val barXStart = sizeAndDensity.derive { sliderConfig.touchCircleRadiusPx - sliderConfig.stepMarkerRadiusPx }
+	val barYStart = sizeAndDensity.derive { barYCenter - sliderConfig.barHeightPx / 2 }
 	val barWidth = sizeAndDensity.derive { composableSize.width - 2 * barXStart }
-	val barHeight = sizeAndDensity.derive { barYCenter - sliderConfiguration.barHeightPx / 2 }
+	val barCornerRadius = sizeAndDensity.derive { CornerRadius(sliderConfig.barCornerRadiusPx, sliderConfig.barCornerRadiusPx) }
 
-	val (tickXCoordinates, tickSpacing) = sizeAndDensity.derive(steps) {
-		calculateTickCoordinatesAndSpacing(
-			numberOfTicks = steps.size,
+	val (stepXCoordinates, stepSpacing) = sizeAndDensity.derive(steps) {
+		calculateStepCoordinatesAndSpacing(
+			numberOfSteps = steps.size,
 			barXStart = barXStart,
 			barWidth = barWidth,
-			tickCircleRadius = sliderConfiguration.tickCircleRadiusPx
+			stepMarkerRadius = sliderConfig.stepMarkerRadiusPx
 		)
 	}
 
 	var leftCirclePosition by remember(key1 = composableSize) {
 		val lowerBoundIdx = steps.indexOf(selectedLowerBound)
-		mutableStateOf(Offset(tickXCoordinates[lowerBoundIdx], barYCenter))
+		mutableStateOf(Offset(stepXCoordinates[lowerBoundIdx], barYCenter))
 	}
 	var rightCirclePosition by remember(key1 = composableSize) {
 		val upperBoundIdx = steps.indexOf(selectedUpperBound)
-		mutableStateOf(Offset(tickXCoordinates[upperBoundIdx], barYCenter))
+		mutableStateOf(Offset(stepXCoordinates[upperBoundIdx], barYCenter))
 	}
 
 	Canvas(
 		modifier = modifier
 			.height(height)
+			.onSizeChanged {
+				composableSize = it
+			}
 			.touchInteraction(remember { MutableInteractionSource() }) {
 				touchInteractionState = it
 			}
-			.onSizeChanged {
-				composableSize = it
-			},
 	) {
 		drawRoundRect(
-			color = sliderConfiguration.textColorOutOfRange,
-			topLeft = Offset(barXStart, barHeight),
-			size = Size(barWidth, sliderConfiguration.barHeightPx),
+			color = sliderConfig.barColor,
+			topLeft = Offset(barXStart, barYStart),
+			size = Size(barWidth, sliderConfig.barHeightPx),
 			cornerRadius = barCornerRadius
 		)
 
 		drawRect(
-			color = sliderConfiguration.barColor,
-			topLeft = Offset(leftCirclePosition.x, barHeight),
-			size = Size(rightCirclePosition.x - leftCirclePosition.x, sliderConfiguration.barHeightPx)
+			color = sliderConfig.barColorInRange,
+			topLeft = Offset(leftCirclePosition.x, barYStart),
+			size = Size(rightCirclePosition.x - leftCirclePosition.x, sliderConfig.barHeightPx)
 		)
 
-		drawTicksAndLabels(
-			tickValues = steps,
-			tickXCoordinates = tickXCoordinates,
-			sliderConfiguration = sliderConfiguration,
+		drawStepMarkersAndLabels(
+			steps = steps,
+			stepXCoordinates = stepXCoordinates,
 			leftCirclePosition = leftCirclePosition,
 			rightCirclePosition = rightCirclePosition,
-			barYCenter = barYCenter
+			barYCenter = barYCenter,
+			sliderConfig = sliderConfig
 		)
 
 		drawCircleWithShadow(
-			position = leftCirclePosition,
-			touched = moveLeft,
-			sliderConfiguration = sliderConfiguration
+			leftCirclePosition,
+			false,
+			sliderConfig
 		)
 
 		drawCircleWithShadow(
-			position = rightCirclePosition,
-			touched = moveRight,
-			sliderConfiguration = sliderConfiguration
+			rightCirclePosition,
+			false,
+			sliderConfig
 		)
+	}
 
-		handleTouch(
-			leftCirclePosition = leftCirclePosition,
-			rightCirclePosition = rightCirclePosition,
-			moveLeft = moveLeft,
-			moveRight = moveRight,
-			tickXCoordinates = tickXCoordinates,
-			tickSpacing = tickSpacing,
-			touchInteraction = touchInteractionState,
-			sliderConfiguration = sliderConfiguration,
-			updateLeft = { position, move ->
-				leftCirclePosition = position
-				moveLeft = move
-			},
-			updateRight = { position, move ->
-				rightCirclePosition = position
-				moveRight = move
-			},
-			onTouchInteractionChanged = { touchInteractionState = it },
-			onRangeIdxChanged = { lowerBoundIdx, upperBoundIdx -> onRangeChanged(steps[lowerBoundIdx], steps[upperBoundIdx]) }
+	handleTouch(
+		leftCirclePosition = leftCirclePosition,
+		rightCirclePosition = rightCirclePosition,
+		moveLeft = moveLeft,
+		moveRight = moveRight,
+		stepXCoordinates = stepXCoordinates,
+		stepSpacing = stepSpacing,
+		touchInteraction = touchInteractionState,
+		updateLeft = { position, move ->
+			leftCirclePosition = position
+			moveLeft = move
+		},
+		updateRight = { position, move ->
+			rightCirclePosition = position
+			moveRight = move
+		},
+		onTouchInteractionChanged = { touchInteractionState = it },
+		onRangeIdxChanged = { lowerBoundIdx, upperBoundIdx -> onRangeChanged(steps[lowerBoundIdx], steps[upperBoundIdx]) }
+	)
+}
+
+private fun calculateNewLeftCirclePosition(
+	touchPositionX: Float,
+	leftCirclePosition: Offset,
+	rightCirclePosition: Offset,
+	stepSpacing: Float,
+	firstStepXPosition: Float
+): Offset = when {
+	touchPositionX < firstStepXPosition                    -> leftCirclePosition.copy(x = firstStepXPosition)
+	touchPositionX > (rightCirclePosition.x - stepSpacing) -> leftCirclePosition
+	else                                                   -> leftCirclePosition.copy(x = touchPositionX)
+}
+
+private fun calculateNewRightCirclePosition(
+	touchPositionX: Float,
+	leftCirclePosition: Offset,
+	rightCirclePosition: Offset,
+	stepSpacing: Float,
+	lastStepXPosition: Float
+): Offset = when {
+	touchPositionX > lastStepXPosition                    -> rightCirclePosition.copy(x = lastStepXPosition)
+	touchPositionX < (leftCirclePosition.x + stepSpacing) -> rightCirclePosition
+	else                                                  -> rightCirclePosition.copy(x = touchPositionX)
+}
+
+private fun DrawScope.drawCircleWithShadow(
+	position: Offset,
+	touched: Boolean,
+	sliderConfig: SliderConfiguration
+) {
+	val touchAddition = if (touched) {
+		sliderConfig.touchCircleShadowTouchedSizeAdditionPx
+	} else {
+		0f
+	}
+
+	drawIntoCanvas {
+		val paint = androidx.compose.ui.graphics.Paint()
+		val frameworkPaint = paint.asFrameworkPaint()
+		frameworkPaint.color = sliderConfig.touchCircleColor.toArgb()
+		frameworkPaint.setShadowLayer(
+			sliderConfig.touchCircleShadowSizePx + touchAddition,
+			0f,
+			0f,
+			Color.DarkGray.toArgb()
+		)
+		it.drawCircle(
+			position,
+			sliderConfig.touchCircleRadiusPx,
+			paint
 		)
 	}
 }
 
-private fun <T> DrawScope.drawTicksAndLabels(
-	tickValues: List<T>,
-	tickXCoordinates: FloatArray,
-	sliderConfiguration: SliderConfiguration,
+private fun <T> DrawScope.drawStepMarkersAndLabels(
+	steps: List<T>,
+	stepXCoordinates: FloatArray,
 	leftCirclePosition: Offset,
 	rightCirclePosition: Offset,
-	barYCenter: Float
+	barYCenter: Float,
+	sliderConfig: SliderConfiguration
 ) {
-	assert(tickValues.size == tickXCoordinates.size) { "Step value size and step coordinate size do not match. Value size: ${tickValues.size}, Coordinate size: ${tickXCoordinates.size}" }
+	require(steps.size == stepXCoordinates.size) { "Step value size and step coordinate size do not match. Value size: ${steps.size}, Coordinate size: ${stepXCoordinates.size}" }
 
-	tickValues.forEachIndexed { index, step ->
-		val tickCenter = Offset(tickXCoordinates[index], barYCenter)
+	steps.forEachIndexed { index, step ->
+		val stepMarkerCenter = Offset(stepXCoordinates[index], barYCenter)
 
 		val isCurrentlySelectedByLeftCircle =
-			(leftCirclePosition.x > (tickCenter.x - sliderConfiguration.tickCircleRadiusPx / 2)) &&
-					(leftCirclePosition.x < (tickCenter.x + sliderConfiguration.tickCircleRadiusPx / 2))
+			(leftCirclePosition.x > (stepMarkerCenter.x - sliderConfig.stepMarkerRadiusPx / 2)) &&
+					(leftCirclePosition.x < (stepMarkerCenter.x + sliderConfig.stepMarkerRadiusPx / 2))
 		val isCurrentlySelectedByRightCircle =
-			(rightCirclePosition.x > (tickCenter.x - sliderConfiguration.tickCircleRadiusPx / 2)) &&
-					(rightCirclePosition.x < (tickCenter.x + sliderConfiguration.tickCircleRadiusPx / 2))
+			(rightCirclePosition.x > (stepMarkerCenter.x - sliderConfig.stepMarkerRadiusPx / 2)) &&
+					(rightCirclePosition.x < (stepMarkerCenter.x + sliderConfig.stepMarkerRadiusPx / 2))
 
 		val paint = when {
-			isCurrentlySelectedByLeftCircle || isCurrentlySelectedByRightCircle -> sliderConfiguration.textSelectedPaint
-			tickCenter.x < leftCirclePosition.x || tickCenter.x > rightCirclePosition.x -> sliderConfiguration.textOutOfRangePaint
-			else -> sliderConfiguration.textInRangePaint
+			isCurrentlySelectedByLeftCircle || isCurrentlySelectedByRightCircle                     -> sliderConfig.textSelectedPaint
+			stepMarkerCenter.x < leftCirclePosition.x || stepMarkerCenter.x > rightCirclePosition.x -> sliderConfig.textOutOfRangePaint
+			else                                                                                    -> sliderConfig.textInRangePaint
 		}
 
 		drawCircle(
-			color = sliderConfiguration.tickColor,
-			radius = sliderConfiguration.tickCircleRadiusPx,
+			color = sliderConfig.stepMarkerColor,
+			radius = sliderConfig.stepMarkerRadiusPx,
 			alpha = .1f,
-			center = tickCenter
+			center = stepMarkerCenter
 		)
 
 		drawIntoCanvas {
@@ -181,56 +234,38 @@ private fun <T> DrawScope.drawTicksAndLabels(
 			}
 			it.nativeCanvas.drawText(
 				stepText,
-				tickCenter.x - (stepText.length * sliderConfiguration.textSizePx) / 3,
-				sliderConfiguration.textSizePx,
+				stepMarkerCenter.x - (stepText.length * sliderConfig.textSizePx) / 3,
+				sliderConfig.textSizePx,
 				paint
 			)
 		}
 	}
 }
 
-private fun DrawScope.drawCircleWithShadow(position: Offset, touched: Boolean, sliderConfiguration: SliderConfiguration) {
-	val transparentColor = Color.Transparent.value.toInt()
+private fun calculateStepCoordinatesAndSpacing(
+	numberOfSteps: Int,
+	barXStart: Float,
+	barWidth: Float,
+	stepMarkerRadius: Float,
+): Pair<FloatArray, Float> {
+	val stepOffset = barXStart + stepMarkerRadius
+	val stepSpacing = (barWidth - 2 * stepMarkerRadius) / (numberOfSteps - 1)
 
-	val touchAddition = if (touched) {
-		sliderConfiguration.touchCircleShadowTouchedSizeAdditionPx
-	} else {
-		0f
-	}
+	val stepXCoordinates = generateSequence(stepOffset) { it + stepSpacing }
+		.take(numberOfSteps)
+		.toList()
 
-	drawIntoCanvas {
-		val paint = androidx.compose.ui.graphics.Paint()
-		val frameworkPaint = paint.asFrameworkPaint()
-		frameworkPaint.color = transparentColor
-		frameworkPaint.setShadowLayer(
-			sliderConfiguration.touchCircleShadowSizePx + touchAddition,
-			0f,
-			0f,
-			Color.DarkGray.toArgb()
-		)
-		it.drawCircle(
-			position,
-			sliderConfiguration.touchCircleRadiusPx,
-			paint
-		)
-	}
-
-	drawCircle(
-		color = sliderConfiguration.touchCircleColor,
-		radius = sliderConfiguration.touchCircleRadiusPx,
-		center = position
-	)
+	return stepXCoordinates.toFloatArray() to stepSpacing
 }
 
-private fun DrawScope.handleTouch(
+private fun handleTouch(
 	leftCirclePosition: Offset,
 	rightCirclePosition: Offset,
 	moveLeft: Boolean,
 	moveRight: Boolean,
-	tickXCoordinates: FloatArray,
-	tickSpacing: Float,
+	stepXCoordinates: FloatArray,
+	stepSpacing: Float,
 	touchInteraction: TouchInteraction,
-	sliderConfiguration: SliderConfiguration,
 	updateLeft: (Offset, Boolean) -> Unit,
 	updateRight: (Offset, Boolean) -> Unit,
 	onTouchInteractionChanged: (TouchInteraction) -> Unit,
@@ -240,24 +275,24 @@ private fun DrawScope.handleTouch(
 		is TouchInteraction.Move -> {
 			val touchPositionX = touchInteraction.position.x
 			if (abs(touchPositionX - leftCirclePosition.x) < abs(touchPositionX - rightCirclePosition.x)) {
-				val leftPosition = calculateNewLeftCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, tickSpacing, sliderConfiguration)
+				val leftPosition = calculateNewLeftCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, stepSpacing, stepXCoordinates.first())
 				updateLeft(leftPosition, true)
 
 				if (moveRight) {
-					moveToClosestTick(rightCirclePosition, tickXCoordinates) { position, move -> updateRight(position, move) }
+					moveToClosestStep(rightCirclePosition, stepXCoordinates) { position, move -> updateRight(position, move) }
 				}
 			} else {
-				val rightPosition = calculateNewRightCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, tickSpacing, sliderConfiguration)
+				val rightPosition = calculateNewRightCirclePosition(touchPositionX, leftCirclePosition, rightCirclePosition, stepSpacing, stepXCoordinates.last())
 				updateRight(rightPosition, true)
 
 				if (moveLeft) {
-					moveToClosestTick(leftCirclePosition, tickXCoordinates) { position, move -> updateLeft(position, move) }
+					moveToClosestStep(leftCirclePosition, stepXCoordinates) { position, move -> updateLeft(position, move) }
 				}
 			}
 		}
 		is TouchInteraction.Up   -> {
-			val (closestLeftValue, closestLeftIndex) = tickXCoordinates.getClosestNumber(leftCirclePosition.x)
-			val (closestRightValue, closestRightIndex) = tickXCoordinates.getClosestNumber(rightCirclePosition.x)
+			val (closestLeftValue, closestLeftIndex) = stepXCoordinates.getClosestNumber(leftCirclePosition.x)
+			val (closestRightValue, closestRightIndex) = stepXCoordinates.getClosestNumber(rightCirclePosition.x)
 			if (moveLeft) {
 				val leftPosition = leftCirclePosition.copy(x = closestLeftValue)
 				updateLeft(leftPosition, false)
@@ -276,52 +311,17 @@ private fun DrawScope.handleTouch(
 	}
 }
 
-private fun moveToClosestTick(circlePosition: Offset, tickXCoordinates: FloatArray, update: (Offset, Boolean) -> Unit) {
-	val (closestRightValue, _) = tickXCoordinates.getClosestNumber(circlePosition.x)
+private fun moveToClosestStep(circlePosition: Offset, stepXCoordinates: FloatArray, update: (Offset, Boolean) -> Unit) {
+	val (closestRightValue, _) = stepXCoordinates.getClosestNumber(circlePosition.x)
 	val updatedPosition = circlePosition.copy(x = closestRightValue)
 	update(updatedPosition, false)
 }
 
-private fun Density.calculateNewLeftCirclePosition(
-	touchPositionX: Float,
-	leftCirclePosition: Offset,
-	rightCirclePosition: Offset,
-	tickSpacing: Float,
-	sliderConfiguration: SliderConfiguration
-): Offset = when {
-	touchPositionX < (sliderConfiguration.touchCircleRadiusPx / 2) -> leftCirclePosition.copy(x = sliderConfiguration.touchCircleRadiusPx)
-	touchPositionX > (rightCirclePosition.x - tickSpacing)         -> leftCirclePosition
-	else                                                           -> leftCirclePosition.copy(x = touchPositionX)
-
-}
-
-private fun DrawScope.calculateNewRightCirclePosition(
-	touchPositionX: Float,
-	leftCirclePosition: Offset,
-	rightCirclePosition: Offset,
-	tickSpacing: Float,
-	sliderConfiguration: SliderConfiguration
-): Offset = when {
-	touchPositionX > size.width - sliderConfiguration.touchCircleRadiusPx -> rightCirclePosition.copy(x = size.width - sliderConfiguration.touchCircleRadiusPx)
-	touchPositionX < (leftCirclePosition.x + tickSpacing)                 -> rightCirclePosition
-	else                                                                  -> rightCirclePosition.copy(x = touchPositionX)
-}
-
-private fun calculateTickCoordinatesAndSpacing(
-	numberOfTicks: Int,
-	barXStart: Float,
-	barWidth: Float,
-	tickCircleRadius: Float,
-): Pair<FloatArray, Float> {
-	val tickOffset = barXStart + tickCircleRadius
-	val tickSpacing = (barWidth - 2 * tickCircleRadius) / (numberOfTicks - 1)
-
-	val tickXCoordinates = generateSequence(tickOffset) { it + tickSpacing }
-		.take(numberOfTicks)
-		.toList()
-
-	return tickXCoordinates.toFloatArray() to tickSpacing
-}
+@Composable
+private fun <T> Pair<IntSize, Density>.derive(additionalKey: Any? = null, block: Density.() -> T): T =
+	remember(key1 = first, key2 = additionalKey) {
+		second.block()
+	}
 
 private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {
 	var minElem = this[0]
@@ -338,12 +338,6 @@ private fun FloatArray.getClosestNumber(input: Float): Pair<Float, Int> {
 	}
 	return minElem to minIdx
 }
-
-@Composable
-private fun <T> Pair<IntSize, Density>.derive(additionalKey: Any? = null, block: Density.() -> T): T =
-	remember(key1 = first, key2 = additionalKey) {
-		second.block()
-	}
 
 @Preview
 @Composable

@@ -8,7 +8,6 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 
-
 sealed class TouchInteraction {
 	object NoInteraction : TouchInteraction()
 	object Up : TouchInteraction()
