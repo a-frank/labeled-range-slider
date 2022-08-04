@@ -106,13 +106,13 @@ fun <T : Number> LabeledRangeSlider(
 
 		drawCircleWithShadow(
 			leftCirclePosition,
-			false,
+			moveLeft,
 			sliderConfig
 		)
 
 		drawCircleWithShadow(
 			rightCirclePosition,
-			false,
+			moveRight,
 			sliderConfig
 		)
 	}
