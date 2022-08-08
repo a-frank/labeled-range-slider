@@ -40,5 +40,6 @@ and more. You can see the full configuration in the [SliderConfiguration class](
 
 ## How it was implemented
 
-If you are interessed in the implementation details and some thoughts bind it, a blog post with explanations will be available soon. Stay tuned :-)
-
+If you are interessed in the implementation details and some thoughts bind it, check out the following two blog posts
+- [Drawing the Labeled Range Slider](https://dev.to/lex_fury/draw-the-labeled-range-slider-1771)
+- [Make the Labeled Range Slider interactive](https://dev.to/lex_fury/make-the-labeled-range-slider-interactive-5gf)
